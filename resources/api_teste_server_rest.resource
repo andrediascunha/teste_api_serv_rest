@@ -13,8 +13,8 @@ ${URL}        https://serverest.dev
 
 Inicializar ambiente de teste
     # Inicializa lista para armazenar IDs de usuários criados no teste
-    @{lista} =    Create List
-    Set Suite Variable    @{ID_USERS_LIST}    @{lista}
+    @{LIST} =    Create List
+    Set Suite Variable    @{ID_USERS_LIST}    @{LIST}
 
     # Inicializa um usuário válido do tipo Admin
     Criar credenciais    valid=${True}
@@ -54,12 +54,12 @@ Criar Sessao nao autenticada
 Criar Sessao autenticada
 
     # Pega o usuario de teste da suite para criar sessao autenticada
-    ${ID_USUARIO_SUITE_TEST} =    Get From List    ${ID_USERS_LIST}    0
-    ${resposta_consulta}  GET On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO_SUITE_TEST}  expected_status=200
-    Set Global Variable    ${ID_USUARIO}  ${ID_USUARIO_SUITE_TEST}
-    Set Global Variable    ${EMAIL}       ${resposta_consulta.json()['email']}
-    Set Global Variable    ${USERNAME}    ${resposta_consulta.json()['nome']}
-    Set Global Variable    ${PASSWORD}    ${resposta_consulta.json()['password']}
+    ${suite_test_user_id} =    Get From List    ${ID_USERS_LIST}    0
+    ${answer}  GET On Session  alias=UnAuthenticated  url=/usuarios/${suite_test_user_id}  expected_status=200
+    Set Global Variable    ${ID_USUARIO}  ${suite_test_user_id}
+    Set Global Variable    ${EMAIL}       ${answer.json()['email']}
+    Set Global Variable    ${USERNAME}    ${answer.json()['nome']}
+    Set Global Variable    ${PASSWORD}    ${answer.json()['password']}
 
     ${body}  Create Dictionary
     ...      email=${EMAIL}
@@ -84,16 +84,16 @@ Crio um novo usuario invalido
 
 Crio um usuario duplicado
     # Verifica se um usuário já está criado na suite e cria caso não exista
-    ${VARIAVEL_ID_USUARIO}=    Get Variable Value    ${ID_USUARIO}
-    IF    $VARIAVEL_ID_USUARIO == None
+    ${user_id_var}=    Get Variable Value    ${ID_USUARIO}
+    IF  $user_id_var == None
         Crio um novo usuario valido
         Cadastro o novo usuario como    "admin"
     END
     
 
 Cadastro o novo usuario como
-    [Arguments]    ${USER_TYPE}
-    IF  ${USER_TYPE} == "admin"
+    [Arguments]    ${user_type}
+    IF  ${user_type} == "admin"
         Set Global Variable  ${ADMINISTRATOR}    true
     ELSE
         Set Global Variable  ${ADMINISTRATOR}    false
@@ -123,18 +123,18 @@ A resposta deve conter
 
 Consulto os dados do usuario
     # Busca dados do usuário por ID
-    ${resposta_consulta}  GET On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  expected_status=200
-    Set Test Variable     ${RESP_CONSULTA_USUARIO}  ${resposta_consulta.json()}
+    ${answer}  GET On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  expected_status=200
+    Set Test Variable     ${QUERY_USER_ANSWER}  ${answer.json()}
 
 O body deve conter as informacoes do usuario
-    &{DADOS_USUARIO_ESPERADOS}=    Create Dictionary
+    &{expected_userdata}=    Create Dictionary
     ...    nome=${USERNAME}
     ...    email=${EMAIL}
     ...    password=${PASSWORD}
     ...    administrador=${ADMINISTRATOR}
 
-    FOR    ${CHAVE}    IN    @{DADOS_USUARIO_ESPERADOS.keys()}
-        Dictionary Should Contain Item    ${RESP_CONSULTA_USUARIO}    ${CHAVE}    ${DADOS_USUARIO_ESPERADOS['${CHAVE}']}
+    FOR    ${CHAVE}    IN    @{expected_userdata.keys()}
+        Dictionary Should Contain Item    ${QUERY_USER_ANSWER}    ${CHAVE}    ${expected_userdata['${CHAVE}']}
     END
 
 Estou logado no sistema
@@ -144,10 +144,10 @@ Pego os dados de um usuario existente
     consulto os dados do usuario
 
 Altero o usuario
-    ${NEW_NAME}    FakerLibrary.Name
-    ${RESP_CONSULTA_USUARIO}=    Set To Dictionary    ${RESP_CONSULTA_USUARIO}    nome=${NEW_NAME}
-    Remove From Dictionary    ${RESP_CONSULTA_USUARIO}    _id
-    ${answer}  PUT On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  json=${RESP_CONSULTA_USUARIO}  expected_status=200
+    ${new_name}    FakerLibrary.Name
+    ${QUERY_USER_ANSWER}=    Set To Dictionary    ${QUERY_USER_ANSWER}    nome=${new_name}
+    Remove From Dictionary    ${QUERY_USER_ANSWER}    _id
+    ${answer}  PUT On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  json=${QUERY_USER_ANSWER}  expected_status=200
 
     Set Test Variable    ${STATUS_CODE_RESPONSE}   ${answer.status_code}
     Set Test Variable    ${BODDY_RESPONSE}        ${answer.json()}
@@ -159,21 +159,21 @@ Altero o usuario sem dados no body
     Set Test Variable    ${BODDY_RESPONSE}        ${answer.json()}
     
 O body deve listar as informacoes ausentes
-    &{DADOS_ESPERADOS}=    Create Dictionary
+    &{expected_data}=    Create Dictionary
     ...    nome=nome é obrigatório
 	...    email=email é obrigatório
     ...    password=password é obrigatório
 	...    administrador=administrador é obrigatório
     
-    FOR    ${CHAVE}    IN    @{DADOS_ESPERADOS.keys()}
-        Dictionary Should Contain Item    ${BODDY_RESPONSE}    ${CHAVE}    ${DADOS_ESPERADOS['${CHAVE}']}
+    FOR    ${CHAVE}    IN    @{expected_data.keys()}
+        Dictionary Should Contain Item    ${BODDY_RESPONSE}    ${CHAVE}    ${expected_data['${CHAVE}']}
     END
 
 Altero o usuario para email em uso
     Consulto os dados do usuario
     
     # Armazena email do usuario atual
-    ${CURRENT_USER_EMAIL}    Get From Dictionary    ${RESP_CONSULTA_USUARIO}    email
+    ${current_user_email}    Get From Dictionary    ${QUERY_USER_ANSWER}    email
 
     # Cadastra um novo usuário para tentar editar com email em uso
     Crio um novo usuario valido
@@ -181,13 +181,13 @@ Altero o usuario para email em uso
 
     # Pega os dados do usurio autal e altera para email em uso
     Consulto os dados do usuario
-    ${RESP_CONSULTA_USUARIO}=    Set To Dictionary    ${RESP_CONSULTA_USUARIO}    email=${CURRENT_USER_EMAIL}
+    ${QUERY_USER_ANSWER}=    Set To Dictionary    ${QUERY_USER_ANSWER}    email=${current_user_email}
     
     # Remode a propriedade _id do body pois o endpoint não aceita
-    Remove From Dictionary    ${RESP_CONSULTA_USUARIO}    _id
+    Remove From Dictionary    ${QUERY_USER_ANSWER}    _id
     
     # Envia alteração para API
-    ${answer}  PUT On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  json=${RESP_CONSULTA_USUARIO}  expected_status=any
+    ${answer}  PUT On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  json=${QUERY_USER_ANSWER}  expected_status=any
     
     # Seta variáveis do teste
     Set Test Variable    ${STATUS_CODE_RESPONSE}   ${answer.status_code}

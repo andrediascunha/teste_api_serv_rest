@@ -34,17 +34,21 @@ Finalizar ambiente de teste
         ...    expected_status=200
     END
 
+
 Criar credenciais
     [Arguments]    ${valid}
+
+    ${USERNAME}=    FakerLibrary.Word
+    Set Global Variable    ${USERNAME}
+
     IF    ${valid}
-        ${EMAIL}       FakerLibrary.Email
+        ${EMAIL}=    Set Variable    ${USERNAME}@${USERNAME}.com
     ELSE
-        ${EMAIL}       FakerLibrary.Name
+        ${EMAIL}=    FakerLibrary.Word
     END
     Set Global Variable    ${EMAIL}
-    ${USERNAME}    FakerLibrary.User Name
-    Set Global Variable    ${USERNAME}
-    ${PASSWORD}    FakerLibrary.Password
+
+    ${PASSWORD}=    FakerLibrary.Word
     Set Global Variable    ${PASSWORD}
 
 Criar Sessao nao autenticada
@@ -144,7 +148,7 @@ Pego os dados de um usuario existente
     consulto os dados do usuario
 
 Altero o usuario
-    ${new_name}    FakerLibrary.Name
+    ${new_name}=    FakerLibrary.Word
     ${QUERY_USER_ANSWER}=    Set To Dictionary    ${QUERY_USER_ANSWER}    nome=${new_name}
     Remove From Dictionary    ${QUERY_USER_ANSWER}    _id
     ${answer}  PUT On Session  alias=UnAuthenticated  url=/usuarios/${ID_USUARIO}  json=${QUERY_USER_ANSWER}  expected_status=200

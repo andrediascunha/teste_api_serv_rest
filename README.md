@@ -34,4 +34,8 @@ Quanto a RequestsLibrary, ela é uma biblioteca robusta, bem documentada para us
 - Os testes estão especificados no arquivo "cenarios de teste API.pdf"
 
 # Rodando em docker
-- Em desenvolvimento
+- Faça um clone do repositório:
+  -  git clone https://github.com/andrediascunha/teste_api_serv_rest.git
+- Rode a suite de teste com:
+  -  sudo docker compose up --build
+-  Verifique os resultados na pasta results

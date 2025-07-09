@@ -8,5 +8,4 @@ services:
       - ./:/tests
       - ./results:/results
     working_dir: /tests
-    command: robot -d /results -K off .
     tty: true

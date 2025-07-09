@@ -36,6 +36,20 @@ Quanto a RequestsLibrary, ela é uma biblioteca robusta, bem documentada para us
 # Rodando em docker
 - Faça um clone do repositório:
   -  git clone https://github.com/andrediascunha/teste_api_serv_rest.git
-- Rode a suite de teste com:
-  -  sudo docker compose up --build
+
+- Verifique se o make está instalado com o comando:
+  - make --v
+  - Para instalar o make, basta digitar o comando sudo apt install make
+
+- Faça a build da imagem com:
+  - make build
+
+- Rode os testes com:
+  - make test ROBOT_ARGS='-d /results tests/'
+  - O make test executará o comando robot com os argumentos passados em ROBOT_ARGS, com isso você poderá passar qualquer argumento do Robot por esse parâmetro
+  - Exemplo, para executar apenas o teste "Criar usuário comum valido":
+      make test ROBOT_ARGS='--test "Criar usuário comum valido" -d /results tests/'
 -  Verifique os resultados na pasta results
+
+- Abrindo o container em modo interativo:
+  - Caso queira abrir o container e interagir via terminal, basta digitar o comando "make up"
